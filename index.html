@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busca Alunos - CETISB</title>
-    
+
+    <!-- Biblioteca Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
+    <!-- Fonte -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ESTILO (CSS) */
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f0f2f5;
@@ -48,7 +49,6 @@
             font-size: 1.6rem;
             color: #1a1a1a;
             margin: 10px 0 5px 0;
-            line-height: 1.2;
         }
 
         h2 {
@@ -60,34 +60,40 @@
 
         .search-box {
             margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .search-box input {
             width: 100%;
-            max-width: 600px;
+            max-width: 450px;
             padding: 15px 20px;
             font-size: 18px;
             border: 2px solid #ccc;
             border-radius: 50px;
             outline: none;
-            transition: all 0.3s ease;
         }
 
-        .search-box input:focus {
-            border-color: #003399;
-            box-shadow: 0 0 10px rgba(0, 51, 153, 0.2);
+        .search-box button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            background-color: #003399;
+            color: white;
         }
 
-        .table-container {
-            overflow-x: auto;
+        .search-box button:hover {
+            background-color: #002266;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            border-radius: 8px;
-            overflow: hidden;
         }
 
         th, td {
@@ -100,9 +106,7 @@
             background-color: #003399;
             color: white;
             text-transform: uppercase;
-            font-weight: bold;
             font-size: 0.9rem;
-            letter-spacing: 0.5px;
         }
 
         tr:nth-child(even) {
@@ -117,157 +121,146 @@
             color: #666;
             font-style: italic;
             padding: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <img src="https://saga.educacao.ba.gov.br/imagens/SEC_Vertical.png" alt="Brasão Bahia" class="logo">
-            
-            <h1>CETISB - COLÉGIO ESTADUAL DE TEMPO INTEGRAL SENHOR DO BONFIM</h1>
-            <h2>Sistema de Busca de Alunos</h2>
-        </header>
+<div class="container">
+    <header>
+        <img src="https://saga.educacao.ba.gov.br/imagens/SEC_Vertical.png" class="logo">
+        <h1>CETISB - COLÉGIO ESTADUAL DE TEMPO INTEGRAL SENHOR DO BONFIM</h1>
+        <h2>Sistema de Busca de Alunos</h2>
+    </header>
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Digite o nome do aluno aqui..." onkeyup="filtrarAlunos()">
-        </div>
-
-        <div class="table-container">
-            <table id="tabelaAlunos">
-                <thead>
-                    <tr>
-                        <th width="15%">Nº</th>
-                        <th width="55%">Nome do Aluno</th>
-                        <th width="30%">Arquivo</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoTabela">
-                    <tr>
-                        <td colspan="3" class="status-msg">Carregando a base de dados...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="search-box">
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Digite o nome do aluno..."
+            onkeypress="verificarEnter(event)"
+        >
+        <button onclick="pesquisar()">Pesquisar</button>
     </div>
 
-    <script>
-        // ============================================================
-        // CONFIGURAÇÃO: Seu link original
-        // ============================================================
-        const urlOriginal = "https://github.com/eijoeljunior289/estadual/raw/refs/heads/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx"; 
-        
-        // AQUI ESTÁ O PULO DO GATO: Usamos um proxy pra burlar o bloqueio do navegador
-        const urlComProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlOriginal)}`;
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">Nº</th>
+                <th width="55%">Nome do Aluno</th>
+                <th width="30%">Arquivo</th> <!-- ALTERADO AQUI -->
+            </tr>
+        </thead>
+        <tbody id="corpoTabela">
+            <tr>
+                <td colspan="3" class="status-msg">
+                    Digite um nome e clique em <strong>Pesquisar</strong>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
-        let todosAlunos = [];
+<script>
+    const urlExcel = "https://raw.githubusercontent.com/eijoeljunior289/estadual/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx";
 
-        // Inicia assim que a página carrega
-        window.onload = async function() {
-            carregarExcel();
-        };
+    let todosAlunos = [];
 
-        async function carregarExcel() {
-            const corpoTabela = document.getElementById('corpoTabela');
+    function normalizarTexto(texto) {
+        if (!texto) return "";
+        return texto
+            .toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toUpperCase()
+            .replace(/\s+/g, " ")
+            .trim();
+    }
 
-            try {
-                // Tenta buscar o arquivo usando o link com proxy
-                const resposta = await fetch(urlComProxy);
-                
-                if (!resposta.ok) throw new Error("Banco de Dados não encontrado. Verifique se o repositório é Público.");
+    window.onload = carregarExcel;
 
-                const arrayBuffer = await resposta.arrayBuffer();
-                
-                // Lê o arquivo com a biblioteca SheetJS
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                todosAlunos = [];
+    async function carregarExcel() {
+        const resposta = await fetch(urlExcel);
+        const arrayBuffer = await resposta.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
-                // Passa pente fino em todas as abas (Planilhas)
-                workbook.SheetNames.forEach(nomeAba => {
-                    const planilha = workbook.Sheets[nomeAba];
-                    
-                    // Converte pra lista (Array de Arrays)
-                    const dados = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+        todosAlunos = [];
 
-                    // Pula o cabeçalho (índice 0) e pega os dados
-                    dados.slice(1).forEach(linha => {
-                        // Linha[0] = Número, Linha[1] = Nome
-                        const numero = linha[0];
-                        const nome = linha[1];
+        workbook.SheetNames.forEach(aba => {
+            const planilha = workbook.Sheets[aba];
+            const dados = XLSX.utils.sheet_to_json(planilha, { header: 1 });
 
-                        if (nome) { // Só salva se tiver nome
-                            todosAlunos.push({
-                                numero: numero || '-',
-                                nome: nome.toString().toUpperCase().trim(), 
-                                aba: nomeAba
-                            });
-                        }
+            dados.slice(1).forEach(linha => {
+                if (linha[1]) {
+                    const nomeOriginal = linha[1].toString().trim();
+                    todosAlunos.push({
+                        numero: linha[0] || "-",
+                        nome: nomeOriginal.toUpperCase(),
+                        nomeBusca: normalizarTexto(nomeOriginal),
+                        aba: aba
                     });
-                });
-
-                console.log("Resultados encontrados: ", todosAlunos.length);
-                exibirNaTabela(todosAlunos);
-
-            } catch (erro) {
-                console.error("Erro:", erro);
-                corpoTabela.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="status-msg" style="color: red;">
-                            <strong>Erro ao carregar Banco de Dados.</strong><br>
-                            Acesso ao Banco de Dados está bloqueado ou o link tá quebrado.<br>
-                            <em>Erro técnico: ${erro.message}</em>
-                        </td>
-                    </tr>`;
-            }
-        }
-
-        function exibirNaTabela(lista) {
-            const corpo = document.getElementById('corpoTabela');
-            corpo.innerHTML = ""; // Limpa a tabela
-
-            if (lista.length === 0) {
-                corpo.innerHTML = `<tr><td colspan="3" class="status-msg">Nenhum resultado encontrado.</td></tr>`;
-                return;
-            }
-
-            // Limitando a mostrar 100 resultados pra não travar
-            const limite = 100;
-            const listaExibicao = lista.slice(0, limite);
-
-            listaExibicao.forEach(aluno => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${aluno.numero}</td>
-                    <td>${aluno.nome}</td>
-                    <td>${aluno.aba}</td>
-                `;
-                corpo.appendChild(tr);
+                }
             });
+        });
+    }
 
-            if (lista.length > limite) {
-                const trAviso = document.createElement('tr');
-                trAviso.innerHTML = `<td colspan="3" class="status-msg">... e mais ${lista.length - limite} alunos. Continue digitando para filtrar.</td>`;
-                corpo.appendChild(trAviso);
-            }
+    function pesquisar() {
+        const termoDigitado = document.getElementById("searchInput").value;
+        if (!termoDigitado.trim()) return;
+
+        const termosBusca = normalizarTexto(termoDigitado).split(" ");
+
+        const filtrados = todosAlunos.filter(aluno =>
+            termosBusca.every(termo =>
+                aluno.nomeBusca.includes(termo)
+            )
+        );
+
+        exibirNaTabela(filtrados);
+    }
+
+    function verificarEnter(event) {
+        if (event.key === "Enter") {
+            pesquisar();
+        }
+    }
+
+    function exibirNaTabela(lista) {
+        const corpo = document.getElementById("corpoTabela");
+        corpo.innerHTML = "";
+
+        if (lista.length === 0) {
+            corpo.innerHTML = `
+                <tr>
+                    <td colspan="3" class="status-msg">
+                        Nenhum resultado encontrado
+                    </td>
+                </tr>`;
+            return;
         }
 
-        function filtrarAlunos() {
-            const termo = document.getElementById('searchInput').value.toUpperCase();
-            
-            if (termo === "") {
-                exibirNaTabela(todosAlunos);
-                return;
-            }
+        const limite = 100;
+        lista.slice(0, limite).forEach(aluno => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${aluno.numero}</td>
+                <td>${aluno.nome}</td>
+                <td>${aluno.aba}</td>
+            `;
+            corpo.appendChild(tr);
+        });
 
-            const filtrados = todosAlunos.filter(aluno => 
-                aluno.nome.includes(termo)
-            );
-
-            exibirNaTabela(filtrados);
+        if (lista.length > limite) {
+            corpo.innerHTML += `
+                <tr>
+                    <td colspan="3" class="status-msg">
+                        ... e mais ${lista.length - limite} resultados encontrados.
+                    </td>
+                </tr>`;
         }
-    </script>
+    }
+</script>
 
 </body>
 </html>
