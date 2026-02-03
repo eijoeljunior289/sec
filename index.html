@@ -5,36 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busca Alunos - CETISB</title>
 
-    <!-- Biblioteca Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- Fonte -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* --- ESTILOS GERAIS --- */
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f0f2f5;
             margin: 0;
-            padding: 20px;
+            padding: 20px 20px 80px 20px; 
             display: flex;
             justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         .container {
             background: white;
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             text-align: center;
+            height: fit-content;
         }
 
         header {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             border-bottom: 3px solid #003399;
-            padding-bottom: 25px;
+            padding-bottom: 20px;
         }
 
         .logo {
@@ -49,17 +51,19 @@
             font-size: 1.6rem;
             color: #1a1a1a;
             margin: 10px 0 5px 0;
+            line-height: 1.2;
         }
 
         h2 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #555;
             font-weight: 400;
-            margin-top: 0;
+            margin-top: 5px;
         }
 
+        /* --- PESQUISA --- */
         .search-box {
-            margin: 30px 0;
+            margin: 20px 0 10px 0;
             display: flex;
             justify-content: center;
             gap: 10px;
@@ -67,54 +71,93 @@
         }
 
         .search-box input {
-            width: 100%;
-            max-width: 450px;
-            padding: 15px 20px;
-            font-size: 18px;
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 20px;
+            font-size: 16px;
             border: 2px solid #ccc;
             border-radius: 50px;
             outline: none;
         }
 
         .search-box button {
-            padding: 15px 30px;
+            padding: 12px 25px;
             font-size: 16px;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             background-color: #003399;
             color: white;
+            white-space: nowrap;
+            font-weight: bold;
         }
 
         .search-box button:hover {
             background-color: #002266;
         }
 
+        /* --- STATUS --- */
+        #msgResultado {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            min-height: 24px;
+        }
+        .texto-sucesso { color: #28a745; }
+        .texto-erro { color: #dc3545; }
+
+        /* --- TABELA --- */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto; 
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
 
         th, td {
-            padding: 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid #eee;
             text-align: left;
+            font-size: 0.95rem;
+            vertical-align: middle;
         }
 
         th {
             background-color: #003399;
             color: white;
             text-transform: uppercase;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            white-space: nowrap; 
         }
 
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
 
-        tr:hover {
-            background-color: #e6f0ff;
+        /* Botão de Reportar (Estilo WhatsApp) */
+        .btn-report {
+            background-color: #cc7400; /* Verde WhatsApp */
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        
+        .btn-report:hover {
+            background-color: #9b360e;
         }
 
         .status-msg {
@@ -122,6 +165,83 @@
             font-style: italic;
             padding: 20px;
             text-align: center;
+        }
+
+        /* --- PAGINAÇÃO --- */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px; 
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            border: 1px solid #dcdcdc;
+            background-color: #fff;
+            color: #333;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .page-btn.active {
+            background-color: #003399;
+            color: white;
+            border-color: #003399;
+            font-weight: bold;
+        }
+
+        .page-btn:disabled {
+            background-color: #f9f9f9;
+            color: #ccc;
+        }
+
+        .dots { padding: 0 2px; color: #777; }
+
+        /* --- RODAPÉ --- */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #003399;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.8rem;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            box-sizing: border-box; 
+        }
+
+        /* --- MOBILE --- */
+        @media (max-width: 480px) {
+            body { padding: 10px 5px 80px 5px; }
+            .container { padding: 20px 10px; }
+            .logo { max-height: 70px; margin-bottom: 10px; }
+            h1 { font-size: 1.1rem; }
+            h2 { font-size: 0.9rem; }
+            
+            .search-box {
+                flex-direction: column; 
+                gap: 8px;
+                margin: 15px 0 10px 0;
+            }
+            .search-box input, .search-box button { width: 100%; padding: 10px; }
+
+            th, td { padding: 8px 5px; font-size: 0.8rem; }
+            
+            th:nth-child(1), td:nth-child(1) { width: 10px; text-align: center; } 
+            th:nth-child(3), td:nth-child(3) { width: 50px; text-align: center; } 
+            th:nth-child(4), td:nth-child(4) { width: 60px; text-align: center; } 
+            
+            .btn-report {
+                padding: 5px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -138,34 +258,52 @@
         <input 
             type="text" 
             id="searchInput" 
-            placeholder="Digite o nome do aluno..."
+            placeholder="Digite o nome..."
             onkeypress="verificarEnter(event)"
         >
-        <button onclick="pesquisar()">Pesquisar</button>
+        <button onclick="iniciarPesquisa()">Pesquisar</button>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th width="15%">Nº</th>
-                <th width="55%">Nome do Aluno</th>
-                <th width="30%">Arquivo</th> <!-- ALTERADO AQUI -->
-            </tr>
-        </thead>
-        <tbody id="corpoTabela">
-            <tr>
-                <td colspan="3" class="status-msg">
-                    Digite um nome e clique em <strong>Pesquisar</strong>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div id="msgResultado"></div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nº</th>
+                    <th>Nome do Aluno</th>
+                    <th>Arquivo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                <tr>
+                    <td colspan="4" class="status-msg">
+                        Digite um nome e clique em <strong>Pesquisar</strong>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="paginacao" class="pagination-container"></div>
 </div>
+
+<footer>
+    &copy; 2024 CETISB - Todos os direitos reservados. | Desenvolvido por Joel Júnior do programa Partiu Estágio.
+</footer>
 
 <script>
     const urlExcel = "https://raw.githubusercontent.com/eijoeljunior289/estadual/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx";
 
+    // --- COLOQUE O NÚMERO DA ESCOLA AQUI (Use 55 + DDD + Numero) ---
+    // Exemplo: 5574999999999
+    const whatsappSecretaria = "5571983152153"; 
+
     let todosAlunos = [];
+    let alunosFiltrados = [];
+    let paginaAtual = 1;
+    const itensPorPagina = 20;
 
     function normalizarTexto(texto) {
         if (!texto) return "";
@@ -205,60 +343,170 @@
         });
     }
 
-    function pesquisar() {
+    function iniciarPesquisa() {
+        paginaAtual = 1;
+        filtrarDados();
+    }
+
+    function filtrarDados() {
         const termoDigitado = document.getElementById("searchInput").value;
-        if (!termoDigitado.trim()) return;
+        const divMsg = document.getElementById("msgResultado");
+        
+        if (!termoDigitado.trim()) {
+            document.getElementById("corpoTabela").innerHTML = `
+                <tr><td colspan="4" class="status-msg">Digite algo para pesquisar...</td></tr>`;
+            document.getElementById("paginacao").innerHTML = "";
+            divMsg.innerHTML = "";
+            divMsg.className = "";
+            return;
+        }
 
         const termosBusca = normalizarTexto(termoDigitado).split(" ");
 
-        const filtrados = todosAlunos.filter(aluno =>
+        alunosFiltrados = todosAlunos.filter(aluno =>
             termosBusca.every(termo =>
                 aluno.nomeBusca.includes(termo)
             )
         );
 
-        exibirNaTabela(filtrados);
+        if (alunosFiltrados.length > 0) {
+            divMsg.innerHTML = `${alunosFiltrados.length} resultado(s) encontrado(s).`;
+            divMsg.className = "texto-sucesso";
+        } else {
+            divMsg.innerHTML = "Nenhum resultado encontrado.";
+            divMsg.className = "texto-erro";
+        }
+
+        renderizarTabela();
+        renderizarPaginacao();
     }
 
     function verificarEnter(event) {
         if (event.key === "Enter") {
-            pesquisar();
+            iniciarPesquisa();
         }
     }
 
-    function exibirNaTabela(lista) {
+    function renderizarTabela() {
         const corpo = document.getElementById("corpoTabela");
         corpo.innerHTML = "";
 
-        if (lista.length === 0) {
+        if (alunosFiltrados.length === 0) {
             corpo.innerHTML = `
                 <tr>
-                    <td colspan="3" class="status-msg">
-                        Nenhum resultado encontrado
+                    <td colspan="4" class="status-msg">
+                        Tente buscar por outro termo.
                     </td>
                 </tr>`;
             return;
         }
 
-        const limite = 100;
-        lista.slice(0, limite).forEach(aluno => {
+        const inicio = (paginaAtual - 1) * itensPorPagina;
+        const fim = inicio + itensPorPagina;
+        const alunosDaPagina = alunosFiltrados.slice(inicio, fim);
+
+        alunosDaPagina.forEach(aluno => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${aluno.numero}</td>
                 <td>${aluno.nome}</td>
                 <td>${aluno.aba}</td>
+                <td style="text-align: center;">
+                    <button class="btn-report" onclick="solicitarRegularizacao('${aluno.nome}', '${aluno.numero}', '${aluno.aba}')">
+                    Solicitar correção
+                    </button>
+                </td>
             `;
             corpo.appendChild(tr);
         });
+    }
 
-        if (lista.length > limite) {
-            corpo.innerHTML += `
-                <tr>
-                    <td colspan="3" class="status-msg">
-                        ... e mais ${lista.length - limite} resultados encontrados.
-                    </td>
-                </tr>`;
+    // --- FUNÇÃO PARA ENVIAR NO ZAP ---
+    function solicitarRegularizacao(nome, numero, pasta) {
+        // Pula linha usando \n
+        const texto = `Olá, vim pelo sistema de busca do CETISB.\n\nGostaria de solicitar a correção dos dados do seguinte aluno:\n\nNome: ${nome}\nNúmero: ${numero}\nPasta/Arquivo: ${pasta}\n\nO erro encontrado é: `;
+        
+        // encodeURIComponent garante que o texto fique legível no link
+        const linkZap = `https://wa.me/${whatsappSecretaria}?text=${encodeURIComponent(texto)}`;
+        
+        window.open(linkZap, '_blank');
+    }
+
+    function renderizarPaginacao() {
+        const divPaginacao = document.getElementById("paginacao");
+        divPaginacao.innerHTML = "";
+
+        const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina);
+
+        if (totalPaginas <= 1) return;
+
+        const btnPrev = document.createElement("button");
+        btnPrev.innerText = "<";
+        btnPrev.className = "page-btn";
+        btnPrev.disabled = paginaAtual === 1;
+        btnPrev.onclick = () => mudarPagina(paginaAtual - 1);
+        divPaginacao.appendChild(btnPrev);
+
+        const maxBotoesVisiveis = 4;
+        let inicioPag = 1;
+        let fimPag = totalPaginas;
+
+        if (totalPaginas > maxBotoesVisiveis) {
+            if (paginaAtual <= 2) {
+                fimPag = 3; 
+            } else if (paginaAtual >= totalPaginas - 1) {
+                inicioPag = totalPaginas - 2; 
+            } else {
+                inicioPag = paginaAtual - 1;
+                fimPag = paginaAtual + 1;
+            }
         }
+
+        if (inicioPag > 1) {
+            adicionarBotaoPagina(1, divPaginacao);
+            if (inicioPag > 2) {
+                const dots = document.createElement("span");
+                dots.className = "dots";
+                dots.innerText = "...";
+                divPaginacao.appendChild(dots);
+            }
+        }
+
+        for (let i = inicioPag; i <= fimPag; i++) {
+             adicionarBotaoPagina(i, divPaginacao);
+        }
+
+        if (fimPag < totalPaginas) {
+            if (fimPag < totalPaginas - 1) {
+                const dots = document.createElement("span");
+                dots.className = "dots";
+                dots.innerText = "...";
+                divPaginacao.appendChild(dots);
+            }
+            adicionarBotaoPagina(totalPaginas, divPaginacao);
+        }
+
+        const btnNext = document.createElement("button");
+        btnNext.innerText = ">";
+        btnNext.className = "page-btn";
+        btnNext.disabled = paginaAtual === totalPaginas;
+        btnNext.onclick = () => mudarPagina(paginaAtual + 1);
+        divPaginacao.appendChild(btnNext);
+    }
+
+    function adicionarBotaoPagina(numero, container) {
+        const btn = document.createElement("button");
+        btn.innerText = numero;
+        btn.className = `page-btn ${numero === paginaAtual ? 'active' : ''}`;
+        btn.onclick = () => mudarPagina(numero);
+        container.appendChild(btn);
+    }
+
+    function mudarPagina(novaPagina) {
+        paginaAtual = novaPagina;
+        renderizarTabela();
+        renderizarPaginacao();
+        document.querySelector(".search-box").scrollIntoView({ behavior: 'smooth' });
     }
 </script>
 
