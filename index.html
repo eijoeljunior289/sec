@@ -294,10 +294,10 @@
 </footer>
 
 <script>
-    const urlExcel = "https://raw.githubusercontent.com/eijoeljunior289/estadual/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx";
+    // URL direta para o arquivo bruto no GitHub
+    const urlExcel = "https://github.com/eijoeljunior289/estadual/raw/refs/heads/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx";
 
-    // --- COLOQUE O NÚMERO DA ESCOLA AQUI (Use 55 + DDD + Numero) ---
-    // Exemplo: 5574999999999
+    // Configuração do WhatsApp
     const whatsappSecretaria = "5571983152153"; 
 
     let todosAlunos = [];
@@ -305,6 +305,7 @@
     let paginaAtual = 1;
     const itensPorPagina = 20;
 
+    // Função para tirar acentos e padronizar a busca
     function normalizarTexto(texto) {
         if (!texto) return "";
         return texto
@@ -316,31 +317,53 @@
             .trim();
     }
 
+    // Carregar os dados assim que a janela carregar
     window.onload = carregarExcel;
 
     async function carregarExcel() {
-        const resposta = await fetch(urlExcel);
-        const arrayBuffer = await resposta.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const divMsg = document.getElementById("msgResultado");
+        divMsg.innerHTML = "Carregando base de dados... aguarde.";
+        divMsg.className = "";
 
-        todosAlunos = [];
+        try {
+            const resposta = await fetch(urlExcel);
+            if (!resposta.ok) throw new Error("Erro ao baixar o arquivo");
+            
+            const arrayBuffer = await resposta.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
-        workbook.SheetNames.forEach(aba => {
-            const planilha = workbook.Sheets[aba];
-            const dados = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+            todosAlunos = [];
 
-            dados.slice(1).forEach(linha => {
-                if (linha[1]) {
-                    const nomeOriginal = linha[1].toString().trim();
-                    todosAlunos.push({
-                        numero: linha[0] || "-",
-                        nome: nomeOriginal.toUpperCase(),
-                        nomeBusca: normalizarTexto(nomeOriginal),
-                        aba: aba
-                    });
-                }
+            workbook.SheetNames.forEach(aba => {
+                const planilha = workbook.Sheets[aba];
+                // header: 1 cria um array de arrays
+                const dados = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+
+                dados.forEach((linha, index) => {
+                    // Pula a primeira linha (cabeçalho) e verifica se a coluna do nome (índice 1) existe
+                    if (index > 0 && linha[1]) {
+                        const nomeOriginal = linha[1].toString().trim();
+                        todosAlunos.push({
+                            numero: linha[0] || "-",
+                            nome: nomeOriginal.toUpperCase(),
+                            nomeBusca: normalizarTexto(nomeOriginal),
+                            aba: aba
+                        });
+                    }
+                });
             });
-        });
+
+            divMsg.innerHTML = "Base de dados carregada com sucesso!";
+            divMsg.className = "texto-sucesso";
+            
+            // Limpa a mensagem após 3 segundos
+            setTimeout(() => { if(divMsg.className === "texto-sucesso") divMsg.innerHTML = ""; }, 3000);
+
+        } catch (erro) {
+            console.error("Erro:", erro);
+            divMsg.innerHTML = "Erro ao carregar os dados. Verifique sua conexão.";
+            divMsg.className = "texto-erro";
+        }
     }
 
     function iniciarPesquisa() {
@@ -354,10 +377,9 @@
         
         if (!termoDigitado.trim()) {
             document.getElementById("corpoTabela").innerHTML = `
-                <tr><td colspan="4" class="status-msg">Digite algo para pesquisar...</td></tr>`;
+                <tr><td colspan="4" class="status-msg">Digite um nome e clique em <strong>Pesquisar</strong></td></tr>`;
             document.getElementById("paginacao").innerHTML = "";
             divMsg.innerHTML = "";
-            divMsg.className = "";
             return;
         }
 
@@ -373,7 +395,7 @@
             divMsg.innerHTML = `${alunosFiltrados.length} resultado(s) encontrado(s).`;
             divMsg.className = "texto-sucesso";
         } else {
-            divMsg.innerHTML = "Nenhum resultado encontrado.";
+            divMsg.innerHTML = "Nenhum aluno encontrado com esse nome.";
             divMsg.className = "texto-erro";
         }
 
@@ -392,12 +414,7 @@
         corpo.innerHTML = "";
 
         if (alunosFiltrados.length === 0) {
-            corpo.innerHTML = `
-                <tr>
-                    <td colspan="4" class="status-msg">
-                        Tente buscar por outro termo.
-                    </td>
-                </tr>`;
+            corpo.innerHTML = `<tr><td colspan="4" class="status-msg">Nenhum dado para exibir.</td></tr>`;
             return;
         }
 
@@ -413,7 +430,7 @@
                 <td>${aluno.aba}</td>
                 <td style="text-align: center;">
                     <button class="btn-report" onclick="solicitarRegularizacao('${aluno.nome}', '${aluno.numero}', '${aluno.aba}')">
-                    Solicitar correção
+                        Solicitar correção
                     </button>
                 </td>
             `;
@@ -421,21 +438,15 @@
         });
     }
 
-    // --- FUNÇÃO PARA ENVIAR NO ZAP ---
     function solicitarRegularizacao(nome, numero, pasta) {
-        // Pula linha usando \n
         const texto = `Olá, vim pelo sistema de busca do CETISB.\n\nGostaria de solicitar a correção dos dados do seguinte aluno:\n\nNome: ${nome}\nNúmero: ${numero}\nPasta/Arquivo: ${pasta}\n\nO erro encontrado é: `;
-        
-        // encodeURIComponent garante que o texto fique legível no link
         const linkZap = `https://wa.me/${whatsappSecretaria}?text=${encodeURIComponent(texto)}`;
-        
         window.open(linkZap, '_blank');
     }
 
     function renderizarPaginacao() {
         const divPaginacao = document.getElementById("paginacao");
         divPaginacao.innerHTML = "";
-
         const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina);
 
         if (totalPaginas <= 1) return;
@@ -447,43 +458,15 @@
         btnPrev.onclick = () => mudarPagina(paginaAtual - 1);
         divPaginacao.appendChild(btnPrev);
 
-        const maxBotoesVisiveis = 4;
-        let inicioPag = 1;
-        let fimPag = totalPaginas;
-
-        if (totalPaginas > maxBotoesVisiveis) {
-            if (paginaAtual <= 2) {
-                fimPag = 3; 
-            } else if (paginaAtual >= totalPaginas - 1) {
-                inicioPag = totalPaginas - 2; 
-            } else {
-                inicioPag = paginaAtual - 1;
-                fimPag = paginaAtual + 1;
-            }
-        }
-
-        if (inicioPag > 1) {
-            adicionarBotaoPagina(1, divPaginacao);
-            if (inicioPag > 2) {
+        for (let i = 1; i <= totalPaginas; i++) {
+            if (i === 1 || i === totalPaginas || (i >= paginaAtual - 1 && i <= paginaAtual + 1)) {
+                adicionarBotaoPagina(i, divPaginacao);
+            } else if (i === paginaAtual - 2 || i === paginaAtual + 2) {
                 const dots = document.createElement("span");
                 dots.className = "dots";
                 dots.innerText = "...";
                 divPaginacao.appendChild(dots);
             }
-        }
-
-        for (let i = inicioPag; i <= fimPag; i++) {
-             adicionarBotaoPagina(i, divPaginacao);
-        }
-
-        if (fimPag < totalPaginas) {
-            if (fimPag < totalPaginas - 1) {
-                const dots = document.createElement("span");
-                dots.className = "dots";
-                dots.innerText = "...";
-                divPaginacao.appendChild(dots);
-            }
-            adicionarBotaoPagina(totalPaginas, divPaginacao);
         }
 
         const btnNext = document.createElement("button");
@@ -506,9 +489,10 @@
         paginaAtual = novaPagina;
         renderizarTabela();
         renderizarPaginacao();
-        document.querySelector(".search-box").scrollIntoView({ behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 </script>
 
 </body>
 </html>
+
