@@ -152,7 +152,7 @@ footer{
     <button onclick="iniciarPesquisa()">Pesquisar</button>
 </div>
 
-<div id="msgResultado" class="texto-sucesso">Carregando lista de alunos...</div>
+<div id="msgResultado" class="texto-sucesso">Carregando banco de dados...</div>
 
 <div class="table-responsive">
 <table>
@@ -176,7 +176,7 @@ footer{
 </div>
 
 <footer>
-© 2024 CETISB | Desenvolvido por Joel Júnior – Partiu Estágio
+© 2026 CETISB | Desenvolvido por Joel Júnior – Partiu Estágio
 </footer>
 
 <script>
@@ -225,7 +225,7 @@ async function carregarExcel(){
             });
         });
 
-        msgResultado.innerHTML = `Base carregada: ${todosAlunos.length} alunos`;
+        msgResultado.innerHTML = `Base carregada: ${todosAlunos.length} resultados.`;
     }catch{
         msgResultado.innerHTML = "Erro ao carregar a lista de alunos.";
         msgResultado.className="texto-erro";
