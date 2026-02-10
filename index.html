@@ -120,10 +120,6 @@ tr:nth-child(even){background:#f9f9f9}
     color:#fff;
     font-weight:bold;
 }
-.page-btn:disabled{
-    opacity:.5;
-    cursor:not-allowed;
-}
 
 footer{
     position:fixed;
@@ -192,6 +188,7 @@ let alunosFiltrados = [];
 let paginaAtual = 1;
 const itensPorPagina = 20;
 
+/* Normalização padrão */
 function normalizarTexto(t){
     return t?.toString()
         .normalize("NFD")
@@ -200,12 +197,17 @@ function normalizarTexto(t){
         .trim() || "";
 }
 
+/* Normalização flexível para nomes pessoais */
+function normalizarNomeFlexivel(texto){
+    return normalizarTexto(texto)
+        .replace(/(.)\1+/g,"$1"); // remove letras repetidas
+}
+
 window.onload = carregarExcel;
 
 async function carregarExcel(){
     try{
         const res = await fetch(urlExcel);
-        if(!res.ok) throw new Error("Falha ao baixar o Excel");
         const buffer = await res.arrayBuffer();
         const wb = XLSX.read(buffer,{type:"array"});
 
@@ -216,19 +218,17 @@ async function carregarExcel(){
                     todosAlunos.push({
                         numero:l[0] || "-",
                         nome:l[1].toString().toUpperCase(),
-                        nomeBusca:normalizarTexto(l[1]),
+                        nomeBusca: normalizarNomeFlexivel(l[1]),
                         aba
                     });
                 }
             });
         });
 
-        document.getElementById("msgResultado").innerHTML =
-            `Base carregada: ${todosAlunos.length} alunos`;
-    }catch(e){
-        document.getElementById("msgResultado").innerHTML =
-            "Erro ao carregar a lista de alunos.";
-        document.getElementById("msgResultado").className="texto-erro";
+        msgResultado.innerHTML = `Base carregada: ${todosAlunos.length} alunos`;
+    }catch{
+        msgResultado.innerHTML = "Erro ao carregar a lista de alunos.";
+        msgResultado.className="texto-erro";
     }
 }
 
@@ -238,10 +238,11 @@ function iniciarPesquisa(){
 }
 
 function filtrarDados(){
-    const termo = normalizarTexto(searchInput.value);
+    const termo = normalizarNomeFlexivel(searchInput.value);
+
     if(!termo){
         corpoTabela.innerHTML =
-            `<tr><td colspan="4" class="status-msg">Digite algo para pesquisar</td></tr>`;
+        `<tr><td colspan="4" class="status-msg">Digite algo para pesquisar</td></tr>`;
         paginacao.innerHTML="";
         return;
     }
@@ -250,13 +251,13 @@ function filtrarDados(){
         termo.split(" ").every(t => a.nomeBusca.includes(t))
     );
 
-    msgResultado.innerHTML =
-        alunosFiltrados.length
+    msgResultado.innerHTML = alunosFiltrados.length
         ? `${alunosFiltrados.length} resultado(s) encontrado(s)`
         : "Nenhum resultado encontrado";
 
-    msgResultado.className =
-        alunosFiltrados.length ? "texto-sucesso" : "texto-erro";
+    msgResultado.className = alunosFiltrados.length
+        ? "texto-sucesso"
+        : "texto-erro";
 
     renderizarTabela();
     renderizarPaginacao();
@@ -308,19 +309,88 @@ Erro encontrado:`;
     );
 }
 
-function renderizarPaginacao(){
-    paginacao.innerHTML="";
-    const total = Math.ceil(alunosFiltrados.length / itensPorPagina);
-    if(total<=1) return;
+/* Paginação */
+function renderizarPaginacao() {
+    const divPaginacao = document.getElementById("paginacao");
+    divPaginacao.innerHTML = "";
 
-    for(let i=1;i<=total;i++){
-        const b=document.createElement("button");
-        b.innerText=i;
-        b.className="page-btn"+(i===paginaAtual?" active":"");
-        b.onclick=()=>{paginaAtual=i;renderizarTabela();renderizarPaginacao();}
-        paginacao.appendChild(b);
+    const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina);
+    if (totalPaginas <= 1) return;
+
+    const btnPrev = document.createElement("button");
+    btnPrev.innerText = "<";
+    btnPrev.className = "page-btn";
+    btnPrev.disabled = paginaAtual === 1;
+    btnPrev.onclick = () => mudarPagina(paginaAtual - 1);
+    divPaginacao.appendChild(btnPrev);
+
+    const maxBotoesVisiveis = 4;
+    let inicioPag = 1;
+    let fimPag = totalPaginas;
+
+    if (totalPaginas > maxBotoesVisiveis) {
+        if (paginaAtual <= 2) {
+            fimPag = 3;
+        } else if (paginaAtual >= totalPaginas - 1) {
+            inicioPag = totalPaginas - 2;
+        } else {
+            inicioPag = paginaAtual - 1;
+            fimPag = paginaAtual + 1;
+        }
     }
+
+    if (inicioPag > 1) {
+        adicionarBotaoPagina(1, divPaginacao);
+
+        if (inicioPag > 2) {
+            const dots = document.createElement("span");
+            dots.className = "dots";
+            dots.innerText = "...";
+            divPaginacao.appendChild(dots);
+        }
+    }
+
+    for (let i = inicioPag; i <= fimPag; i++) {
+        adicionarBotaoPagina(i, divPaginacao);
+    }
+
+    if (fimPag < totalPaginas) {
+        if (fimPag < totalPaginas - 1) {
+            const dots = document.createElement("span");
+            dots.className = "dots";
+            dots.innerText = "...";
+            divPaginacao.appendChild(dots);
+        }
+
+        adicionarBotaoPagina(totalPaginas, divPaginacao);
+    }
+
+    const btnNext = document.createElement("button");
+    btnNext.innerText = ">";
+    btnNext.className = "page-btn";
+    btnNext.disabled = paginaAtual === totalPaginas;
+    btnNext.onclick = () => mudarPagina(paginaAtual + 1);
+    divPaginacao.appendChild(btnNext);
 }
+
+function adicionarBotaoPagina(numero, container) {
+    const btn = document.createElement("button");
+    btn.innerText = numero;
+    btn.className = `page-btn ${numero === paginaAtual ? "active" : ""}`;
+    btn.onclick = () => mudarPagina(numero);
+    container.appendChild(btn);
+}
+
+function mudarPagina(novaPagina) {
+    paginaAtual = novaPagina;
+    renderizarTabela();
+    renderizarPaginacao();
+    document
+        .querySelector(".search-box")
+        .scrollIntoView({ behavior: "smooth" });
+}
+
 </script>
+
 </body>
 </html>
