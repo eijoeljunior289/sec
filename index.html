@@ -1,1028 +1,326 @@
 <!DOCTYPE html>
-
 <html lang="pt-br">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Busca Alunos - CETISB</title>
-
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-
-
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-
-
-
-    <style>
-
-        /* --- ESTILOS GERAIS --- */
-
-        body {
-
-            font-family: 'Roboto', sans-serif;
-
-            background-color: #f0f2f5;
-
-            margin: 0;
-
-            padding: 20px 20px 80px 20px; 
-
-            display: flex;
-
-            justify-content: center;
-
-            min-height: 100vh;
-
-            box-sizing: border-box;
-
-        }
-
-
-
-        .container {
-
-            background: white;
-
-            width: 100%;
-
-            max-width: 950px;
-
-            padding: 40px;
-
-            border-radius: 12px;
-
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-
-            text-align: center;
-
-            height: fit-content;
-
-        }
-
-
-
-        header {
-
-            margin-bottom: 20px;
-
-            border-bottom: 3px solid #003399;
-
-            padding-bottom: 20px;
-
-        }
-
-
-
-        .logo {
-
-            max-height: 100px;
-
-            margin-bottom: 15px;
-
-            display: block;
-
-            margin-left: auto;
-
-            margin-right: auto;
-
-        }
-
-
-
-        h1 {
-
-            font-size: 1.6rem;
-
-            color: #1a1a1a;
-
-            margin: 10px 0 5px 0;
-
-            line-height: 1.2;
-
-        }
-
-
-
-        h2 {
-
-            font-size: 1.1rem;
-
-            color: #555;
-
-            font-weight: 400;
-
-            margin-top: 5px;
-
-        }
-
-
-
-        /* --- PESQUISA --- */
-
-        .search-box {
-
-            margin: 20px 0 10px 0;
-
-            display: flex;
-
-            justify-content: center;
-
-            gap: 10px;
-
-            flex-wrap: wrap;
-
-        }
-
-
-
-        .search-box input {
-
-            flex: 1;
-
-            min-width: 200px;
-
-            padding: 12px 20px;
-
-            font-size: 16px;
-
-            border: 2px solid #ccc;
-
-            border-radius: 50px;
-
-            outline: none;
-
-        }
-
-
-
-        .search-box button {
-
-            padding: 12px 25px;
-
-            font-size: 16px;
-
-            border: none;
-
-            border-radius: 50px;
-
-            cursor: pointer;
-
-            background-color: #003399;
-
-            color: white;
-
-            white-space: nowrap;
-
-            font-weight: bold;
-
-        }
-
-
-
-        .search-box button:hover {
-
-            background-color: #002266;
-
-        }
-
-
-
-        /* --- STATUS --- */
-
-        #msgResultado {
-
-            font-size: 1rem;
-
-            font-weight: bold;
-
-            margin-bottom: 15px;
-
-            min-height: 24px;
-
-        }
-
-        .texto-sucesso { color: #28a745; }
-
-        .texto-erro { color: #dc3545; }
-
-
-
-        /* --- TABELA --- */
-
-        .table-responsive {
-
-            width: 100%;
-
-            overflow-x: auto; 
-
-            margin-top: 5px;
-
-            border-radius: 8px;
-
-            border: 1px solid #eee;
-
-        }
-
-
-
-        table {
-
-            width: 100%;
-
-            border-collapse: collapse;
-
-        }
-
-
-
-        th, td {
-
-            padding: 12px 15px;
-
-            border-bottom: 1px solid #eee;
-
-            text-align: left;
-
-            font-size: 0.95rem;
-
-            vertical-align: middle;
-
-        }
-
-
-
-        th {
-
-            background-color: #003399;
-
-            color: white;
-
-            text-transform: uppercase;
-
-            font-size: 0.85rem;
-
-            white-space: nowrap; 
-
-        }
-
-
-
-        tr:nth-child(even) {
-
-            background-color: #f9f9f9;
-
-        }
-
-
-
-        /* Botão de Reportar (Estilo WhatsApp) */
-
-        .btn-report {
-
-            background-color: #cc7400; /* Verde WhatsApp */
-
-            color: white;
-
-            border: none;
-
-            padding: 6px 12px;
-
-            border-radius: 4px;
-
-            font-size: 0.8rem;
-
-            cursor: pointer;
-
-            font-weight: bold;
-
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 5px;
-
-            white-space: nowrap;
-
-        }
-
-        
-
-        .btn-report:hover {
-
-            background-color: #9b360e;
-
-        }
-
-
-
-        .status-msg {
-
-            color: #666;
-
-            font-style: italic;
-
-            padding: 20px;
-
-            text-align: center;
-
-        }
-
-
-
-        /* --- PAGINAÇÃO --- */
-
-        .pagination-container {
-
-            display: flex;
-
-            justify-content: center;
-
-            align-items: center;
-
-            gap: 4px; 
-
-            margin-top: 20px;
-
-            flex-wrap: wrap;
-
-        }
-
-
-
-        .page-btn {
-
-            border: 1px solid #dcdcdc;
-
-            background-color: #fff;
-
-            color: #333;
-
-            padding: 6px 12px;
-
-            cursor: pointer;
-
-            border-radius: 4px;
-
-            font-size: 14px;
-
-        }
-
-
-
-        .page-btn.active {
-
-            background-color: #003399;
-
-            color: white;
-
-            border-color: #003399;
-
-            font-weight: bold;
-
-        }
-
-
-
-        .page-btn:disabled {
-
-            background-color: #f9f9f9;
-
-            color: #ccc;
-
-        }
-
-
-
-        .dots { padding: 0 2px; color: #777; }
-
-
-
-        /* --- RODAPÉ --- */
-
-        footer {
-
-            position: fixed;
-
-            bottom: 0;
-
-            left: 0;
-
-            width: 100%;
-
-            background-color: #003399;
-
-            color: white;
-
-            text-align: center;
-
-            padding: 10px;
-
-            font-size: 0.8rem;
-
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
-
-            z-index: 1000;
-
-            box-sizing: border-box; 
-
-        }
-
-
-
-        /* --- MOBILE --- */
-
-        @media (max-width: 480px) {
-
-            body { padding: 10px 5px 80px 5px; }
-
-            .container { padding: 20px 10px; }
-
-            .logo { max-height: 70px; margin-bottom: 10px; }
-
-            h1 { font-size: 1.1rem; }
-
-            h2 { font-size: 0.9rem; }
-
-            
-
-            .search-box {
-
-                flex-direction: column; 
-
-                gap: 8px;
-
-                margin: 15px 0 10px 0;
-
-            }
-
-            .search-box input, .search-box button { width: 100%; padding: 10px; }
-
-
-
-            th, td { padding: 8px 5px; font-size: 0.8rem; }
-
-            
-
-            th:nth-child(1), td:nth-child(1) { width: 10px; text-align: center; } 
-
-            th:nth-child(3), td:nth-child(3) { width: 50px; text-align: center; } 
-
-            th:nth-child(4), td:nth-child(4) { width: 60px; text-align: center; } 
-
-            
-
-            .btn-report {
-
-                padding: 5px;
-
-                font-size: 0.75rem;
-
-            }
-
-        }
-
-    </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Busca Alunos - CETISB</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Roboto',sans-serif;
+    background:#f0f2f5;
+    margin:0;
+    padding:20px 20px 80px;
+    display:flex;
+    justify-content:center;
+}
+.container{
+    background:#fff;
+    max-width:950px;
+    width:100%;
+    padding:40px;
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
+    text-align:center;
+}
+header{
+    border-bottom:3px solid #003399;
+    margin-bottom:20px;
+    padding-bottom:20px;
+}
+.logo{max-height:100px;margin-bottom:15px}
+h1{font-size:1.5rem;margin:10px 0}
+h2{font-size:1.1rem;color:#555;font-weight:400}
+
+.search-box{
+    display:flex;
+    gap:10px;
+    margin:20px 0;
+    flex-wrap:wrap;
+}
+.search-box input{
+    flex:1;
+    padding:12px 20px;
+    border-radius:50px;
+    border:2px solid #ccc;
+    font-size:16px;
+}
+.search-box button{
+    padding:12px 25px;
+    border-radius:50px;
+    border:none;
+    background:#003399;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+}
+.search-box button:hover{background:#002266}
+
+#msgResultado{min-height:24px;font-weight:bold}
+.texto-sucesso{color:#28a745}
+.texto-erro{color:#dc3545}
+
+.table-responsive{
+    overflow-x:auto;
+    border:1px solid #eee;
+    border-radius:8px;
+}
+table{width:100%;border-collapse:collapse}
+th,td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+}
+th{
+    background:#003399;
+    color:#fff;
+    text-transform:uppercase;
+    font-size:.85rem;
+}
+tr:nth-child(even){background:#f9f9f9}
+
+.btn-report{
+    background:#cc7400;
+    color:#fff;
+    border:none;
+    padding:6px 12px;
+    border-radius:4px;
+    font-size:.8rem;
+    cursor:pointer;
+    font-weight:bold;
+}
+.btn-report:hover{background:#9b360e}
+
+.status-msg{
+    padding:20px;
+    text-align:center;
+    font-style:italic;
+    color:#666;
+}
+
+.pagination-container{
+    margin-top:20px;
+    display:flex;
+    justify-content:center;
+    gap:5px;
+    flex-wrap:wrap;
+}
+.page-btn{
+    padding:6px 12px;
+    border:1px solid #ccc;
+    background:#fff;
+    cursor:pointer;
+    border-radius:4px;
+}
+.page-btn.active{
+    background:#003399;
+    color:#fff;
+    font-weight:bold;
+}
+.page-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+footer{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#003399;
+    color:#fff;
+    text-align:center;
+    padding:10px;
+    font-size:.8rem;
+}
+@media(max-width:480px){
+    .container{padding:20px 10px}
+    h1{font-size:1.1rem}
+}
+</style>
 </head>
 
 <body>
 
-
-
 <div class="container">
+<header>
+    <img src="https://saga.educacao.ba.gov.br/imagens/SEC_Vertical.png" class="logo">
+    <h1>CETISB - COLÉGIO ESTADUAL DE TEMPO INTEGRAL SENHOR DO BONFIM</h1>
+    <h2>Sistema de Busca de Alunos</h2>
+</header>
 
-    <header>
-
-        <img src="https://saga.educacao.ba.gov.br/imagens/SEC_Vertical.png" class="logo">
-
-        <h1>CETISB - COLÉGIO ESTADUAL DE TEMPO INTEGRAL SENHOR DO BONFIM</h1>
-
-        <h2>Sistema de Busca de Alunos</h2>
-
-    </header>
-
-
-
-    <div class="search-box">
-
-        <input 
-
-            type="text" 
-
-            id="searchInput" 
-
-            placeholder="Digite o nome..."
-
-            onkeypress="verificarEnter(event)"
-
-        >
-
-        <button onclick="iniciarPesquisa()">Pesquisar</button>
-
-    </div>
-
-
-
-    <div id="msgResultado"></div>
-
-
-
-    <div class="table-responsive">
-
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>Nº</th>
-
-                    <th>Nome do Aluno</th>
-
-                    <th>Arquivo</th>
-
-                    <th>Ações</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody id="corpoTabela">
-
-                <tr>
-
-                    <td colspan="4" class="status-msg">
-
-                        Digite um nome e clique em <strong>Pesquisar</strong>
-
-                    </td>
-
-                </tr>
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-
-
-    <div id="paginacao" class="pagination-container"></div>
-
+<div class="search-box">
+    <input id="searchInput" placeholder="Digite o nome..." onkeypress="verificarEnter(event)">
+    <button onclick="iniciarPesquisa()">Pesquisar</button>
 </div>
 
+<div id="msgResultado" class="texto-sucesso">Carregando lista de alunos...</div>
 
+<div class="table-responsive">
+<table>
+<thead>
+<tr>
+    <th>Nº</th>
+    <th>Nome do Aluno</th>
+    <th>Arquivo</th>
+    <th>Ações</th>
+</tr>
+</thead>
+<tbody id="corpoTabela">
+<tr>
+<td colspan="4" class="status-msg">Aguarde, carregando dados...</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div id="paginacao" class="pagination-container"></div>
+</div>
 
 <footer>
-
-    &copy; 2024 CETISB - Todos os direitos reservados. | Desenvolvido por Joel Júnior do programa Partiu Estágio.
-
+© 2024 CETISB | Desenvolvido por Joel Júnior – Partiu Estágio
 </footer>
 
-
-
 <script>
+const urlExcel = "https://raw.githubusercontent.com/eijoeljunior289/estadual/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx";
+const whatsappSecretaria = "5571983152153";
 
-    const urlExcel = "https://raw.githubusercontent.com/eijoeljunior289/estadual/main/LISTA%20DE%20NOMES%20DE%20A%20-%20Z.xlsx";
+let todosAlunos = [];
+let alunosFiltrados = [];
+let paginaAtual = 1;
+const itensPorPagina = 20;
 
+function normalizarTexto(t){
+    return t?.toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .toUpperCase()
+        .trim() || "";
+}
 
+window.onload = carregarExcel;
 
-    // --- COLOQUE O NÚMERO DA ESCOLA AQUI (Use 55 + DDD + Numero) ---
+async function carregarExcel(){
+    try{
+        const res = await fetch(urlExcel);
+        if(!res.ok) throw new Error("Falha ao baixar o Excel");
+        const buffer = await res.arrayBuffer();
+        const wb = XLSX.read(buffer,{type:"array"});
 
-    // Exemplo: 5574999999999
-
-    const whatsappSecretaria = "5571983152153"; 
-
-
-
-    let todosAlunos = [];
-
-    let alunosFiltrados = [];
-
-    let paginaAtual = 1;
-
-    const itensPorPagina = 20;
-
-
-
-    function normalizarTexto(texto) {
-
-        if (!texto) return "";
-
-        return texto
-
-            .toString()
-
-            .normalize("NFD")
-
-            .replace(/[\u0300-\u036f]/g, "")
-
-            .toUpperCase()
-
-            .replace(/\s+/g, " ")
-
-            .trim();
-
-    }
-
-
-
-    window.onload = carregarExcel;
-
-
-
-    async function carregarExcel() {
-
-        const resposta = await fetch(urlExcel);
-
-        const arrayBuffer = await resposta.arrayBuffer();
-
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-
-
-
-        todosAlunos = [];
-
-
-
-        workbook.SheetNames.forEach(aba => {
-
-            const planilha = workbook.Sheets[aba];
-
-            const dados = XLSX.utils.sheet_to_json(planilha, { header: 1 });
-
-
-
-            dados.slice(1).forEach(linha => {
-
-                if (linha[1]) {
-
-                    const nomeOriginal = linha[1].toString().trim();
-
+        wb.SheetNames.forEach(aba=>{
+            const dados = XLSX.utils.sheet_to_json(wb.Sheets[aba],{header:1});
+            dados.slice(1).forEach(l=>{
+                if(l[1]){
                     todosAlunos.push({
-
-                        numero: linha[0] || "-",
-
-                        nome: nomeOriginal.toUpperCase(),
-
-                        nomeBusca: normalizarTexto(nomeOriginal),
-
-                        aba: aba
-
+                        numero:l[0] || "-",
+                        nome:l[1].toString().toUpperCase(),
+                        nomeBusca:normalizarTexto(l[1]),
+                        aba
                     });
-
                 }
-
             });
-
         });
 
+        document.getElementById("msgResultado").innerHTML =
+            `Base carregada: ${todosAlunos.length} alunos`;
+    }catch(e){
+        document.getElementById("msgResultado").innerHTML =
+            "Erro ao carregar a lista de alunos.";
+        document.getElementById("msgResultado").className="texto-erro";
+    }
+}
+
+function iniciarPesquisa(){
+    paginaAtual=1;
+    filtrarDados();
+}
+
+function filtrarDados(){
+    const termo = normalizarTexto(searchInput.value);
+    if(!termo){
+        corpoTabela.innerHTML =
+            `<tr><td colspan="4" class="status-msg">Digite algo para pesquisar</td></tr>`;
+        paginacao.innerHTML="";
+        return;
     }
 
+    alunosFiltrados = todosAlunos.filter(a =>
+        termo.split(" ").every(t => a.nomeBusca.includes(t))
+    );
 
+    msgResultado.innerHTML =
+        alunosFiltrados.length
+        ? `${alunosFiltrados.length} resultado(s) encontrado(s)`
+        : "Nenhum resultado encontrado";
 
-    function iniciarPesquisa() {
+    msgResultado.className =
+        alunosFiltrados.length ? "texto-sucesso" : "texto-erro";
 
-        paginaAtual = 1;
+    renderizarTabela();
+    renderizarPaginacao();
+}
 
-        filtrarDados();
+function verificarEnter(e){
+    if(e.key==="Enter") iniciarPesquisa();
+}
 
+function renderizarTabela(){
+    corpoTabela.innerHTML="";
+    if(!alunosFiltrados.length){
+        corpoTabela.innerHTML =
+        `<tr><td colspan="4" class="status-msg">Sem resultados</td></tr>`;
+        return;
     }
 
-
-
-    function filtrarDados() {
-
-        const termoDigitado = document.getElementById("searchInput").value;
-
-        const divMsg = document.getElementById("msgResultado");
-
-        
-
-        if (!termoDigitado.trim()) {
-
-            document.getElementById("corpoTabela").innerHTML = `
-
-                <tr><td colspan="4" class="status-msg">Digite algo para pesquisar...</td></tr>`;
-
-            document.getElementById("paginacao").innerHTML = "";
-
-            divMsg.innerHTML = "";
-
-            divMsg.className = "";
-
-            return;
-
-        }
-
-
-
-        const termosBusca = normalizarTexto(termoDigitado).split(" ");
-
-
-
-        alunosFiltrados = todosAlunos.filter(aluno =>
-
-            termosBusca.every(termo =>
-
-                aluno.nomeBusca.includes(termo)
-
-            )
-
-        );
-
-
-
-        if (alunosFiltrados.length > 0) {
-
-            divMsg.innerHTML = `${alunosFiltrados.length} resultado(s) encontrado(s).`;
-
-            divMsg.className = "texto-sucesso";
-
-        } else {
-
-            divMsg.innerHTML = "Nenhum resultado encontrado.";
-
-            divMsg.className = "texto-erro";
-
-        }
-
-
-
-        renderizarTabela();
-
-        renderizarPaginacao();
-
-    }
-
-
-
-    function verificarEnter(event) {
-
-        if (event.key === "Enter") {
-
-            iniciarPesquisa();
-
-        }
-
-    }
-
-
-
-    function renderizarTabela() {
-
-        const corpo = document.getElementById("corpoTabela");
-
-        corpo.innerHTML = "";
-
-
-
-        if (alunosFiltrados.length === 0) {
-
-            corpo.innerHTML = `
-
-                <tr>
-
-                    <td colspan="4" class="status-msg">
-
-                        Tente buscar por outro termo.
-
-                    </td>
-
-                </tr>`;
-
-            return;
-
-        }
-
-
-
-        const inicio = (paginaAtual - 1) * itensPorPagina;
-
-        const fim = inicio + itensPorPagina;
-
-        const alunosDaPagina = alunosFiltrados.slice(inicio, fim);
-
-
-
-        alunosDaPagina.forEach(aluno => {
-
-            const tr = document.createElement("tr");
-
-            tr.innerHTML = `
-
-                <td>${aluno.numero}</td>
-
-                <td>${aluno.nome}</td>
-
-                <td>${aluno.aba}</td>
-
-                <td style="text-align: center;">
-
-                    <button class="btn-report" onclick="solicitarRegularizacao('${aluno.nome}', '${aluno.numero}', '${aluno.aba}')">
-
+    alunosFiltrados
+        .slice((paginaAtual-1)*itensPorPagina, paginaAtual*itensPorPagina)
+        .forEach(a=>{
+            corpoTabela.innerHTML += `
+            <tr>
+                <td>${a.numero}</td>
+                <td>${a.nome}</td>
+                <td>${a.aba}</td>
+                <td style="text-align:center">
+                    <button class="btn-report"
+                    onclick="solicitarRegularizacao('${a.nome}','${a.numero}','${a.aba}')">
                     Solicitar correção
-
                     </button>
-
                 </td>
-
-            `;
-
-            corpo.appendChild(tr);
-
+            </tr>`;
         });
+}
 
+function solicitarRegularizacao(nome,numero,aba){
+    const texto =
+`Olá, vim pelo sistema de busca do CETISB.
+
+Solicito correção dos dados:
+Nome: ${nome}
+Número: ${numero}
+Arquivo: ${aba}
+
+Erro encontrado:`;
+    window.open(
+        `https://wa.me/${whatsappSecretaria}?text=${encodeURIComponent(texto)}`,
+        "_blank"
+    );
+}
+
+function renderizarPaginacao(){
+    paginacao.innerHTML="";
+    const total = Math.ceil(alunosFiltrados.length / itensPorPagina);
+    if(total<=1) return;
+
+    for(let i=1;i<=total;i++){
+        const b=document.createElement("button");
+        b.innerText=i;
+        b.className="page-btn"+(i===paginaAtual?" active":"");
+        b.onclick=()=>{paginaAtual=i;renderizarTabela();renderizarPaginacao();}
+        paginacao.appendChild(b);
     }
-
-
-
-    // --- FUNÇÃO PARA ENVIAR NO ZAP ---
-
-    function solicitarRegularizacao(nome, numero, pasta) {
-
-        // Pula linha usando \n
-
-        const texto = `Olá, vim pelo sistema de busca do CETISB.\n\nGostaria de solicitar a correção dos dados do seguinte aluno:\n\nNome: ${nome}\nNúmero: ${numero}\nPasta/Arquivo: ${pasta}\n\nO erro encontrado é: `;
-
-        
-
-        // encodeURIComponent garante que o texto fique legível no link
-
-        const linkZap = `https://wa.me/${whatsappSecretaria}?text=${encodeURIComponent(texto)}`;
-
-        
-
-        window.open(linkZap, '_blank');
-
-    }
-
-
-
-    function renderizarPaginacao() {
-
-        const divPaginacao = document.getElementById("paginacao");
-
-        divPaginacao.innerHTML = "";
-
-
-
-        const totalPaginas = Math.ceil(alunosFiltrados.length / itensPorPagina);
-
-
-
-        if (totalPaginas <= 1) return;
-
-
-
-        const btnPrev = document.createElement("button");
-
-        btnPrev.innerText = "<";
-
-        btnPrev.className = "page-btn";
-
-        btnPrev.disabled = paginaAtual === 1;
-
-        btnPrev.onclick = () => mudarPagina(paginaAtual - 1);
-
-        divPaginacao.appendChild(btnPrev);
-
-
-
-        const maxBotoesVisiveis = 4;
-
-        let inicioPag = 1;
-
-        let fimPag = totalPaginas;
-
-
-
-        if (totalPaginas > maxBotoesVisiveis) {
-
-            if (paginaAtual <= 2) {
-
-                fimPag = 3; 
-
-            } else if (paginaAtual >= totalPaginas - 1) {
-
-                inicioPag = totalPaginas - 2; 
-
-            } else {
-
-                inicioPag = paginaAtual - 1;
-
-                fimPag = paginaAtual + 1;
-
-            }
-
-        }
-
-
-
-        if (inicioPag > 1) {
-
-            adicionarBotaoPagina(1, divPaginacao);
-
-            if (inicioPag > 2) {
-
-                const dots = document.createElement("span");
-
-                dots.className = "dots";
-
-                dots.innerText = "...";
-
-                divPaginacao.appendChild(dots);
-
-            }
-
-        }
-
-
-
-        for (let i = inicioPag; i <= fimPag; i++) {
-
-             adicionarBotaoPagina(i, divPaginacao);
-
-        }
-
-
-
-        if (fimPag < totalPaginas) {
-
-            if (fimPag < totalPaginas - 1) {
-
-                const dots = document.createElement("span");
-
-                dots.className = "dots";
-
-                dots.innerText = "...";
-
-                divPaginacao.appendChild(dots);
-
-            }
-
-            adicionarBotaoPagina(totalPaginas, divPaginacao);
-
-        }
-
-
-
-        const btnNext = document.createElement("button");
-
-        btnNext.innerText = ">";
-
-        btnNext.className = "page-btn";
-
-        btnNext.disabled = paginaAtual === totalPaginas;
-
-        btnNext.onclick = () => mudarPagina(paginaAtual + 1);
-
-        divPaginacao.appendChild(btnNext);
-
-    }
-
-
-
-    function adicionarBotaoPagina(numero, container) {
-
-        const btn = document.createElement("button");
-
-        btn.innerText = numero;
-
-        btn.className = `page-btn ${numero === paginaAtual ? 'active' : ''}`;
-
-        btn.onclick = () => mudarPagina(numero);
-
-        container.appendChild(btn);
-
-    }
-
-
-
-    function mudarPagina(novaPagina) {
-
-        paginaAtual = novaPagina;
-
-        renderizarTabela();
-
-        renderizarPaginacao();
-
-        document.querySelector(".search-box").scrollIntoView({ behavior: 'smooth' });
-
-    }
-
+}
 </script>
-
-
-
 </body>
-
 </html>
-
